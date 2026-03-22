@@ -150,6 +150,18 @@ class BugDetector:
                     message="print() statement found — consider using a logger in production.",
                     fix="Replace `print()` with `logging.info()` or `logging.debug()`."
                 ))
+
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in ('.js', '.ts', '.jsx', '.tsx'):
+            js_pattern = re.compile(r'^\s*console\.(log|debug|warn)\s*\(')
+            for i, line in enumerate(content.splitlines(), 1):
+                if js_pattern.match(line):
+                    issues.append(BugIssue(
+                        filename=filename, line=i,
+                        bug_type="DebugStatement", severity="info",
+                        message="console.log() found — remove debug logging before production.",
+                        fix="Replace console.log() with a proper logging library or remove it entirely."
+                    ))
         return issues
 
     # ── Security rules (all languages) ───────────────────────────────────────
@@ -294,7 +306,7 @@ class BugDetector:
                             filename=filename, line=fn.lineno,
                             bug_type="MutableDefaultArg", severity="warning",
                             message=(
-                                f"Function `{fn.name}` uses a mutable default argument (list/dict/set). "
+                                f"Function {fn.name} uses a mutable default argument (list/dict/set). "
                                 "This object is shared across all calls."
                             ),
                             fix=(

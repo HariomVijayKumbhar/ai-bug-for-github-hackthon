@@ -26,7 +26,23 @@ bug_detector = BugDetector()
 ai_service = AIService()
 
 # ── Global Scan History for Diffing ───────────────────────────────────────────
-SCAN_HISTORY = {}  # repo_url -> {"file_hashes": dict, "bugs": List[BugIssue]}
+import json
+import pathlib
+
+HISTORY_FILE = pathlib.Path("scan_history.json")
+
+def _load_history() -> dict:
+    if HISTORY_FILE.exists():
+        try:
+            return json.loads(HISTORY_FILE.read_text())
+        except Exception:
+            return {}
+    return {}
+
+def _save_history(data: dict):
+    HISTORY_FILE.write_text(json.dumps(data, default=str))
+
+SCAN_HISTORY = _load_history()  # repo_url -> {"file_hashes": dict, "bugs": List[dict]}
 
 # ── Fallback demo files (used when repo fetch fails / no URL) ─────────────
 
@@ -172,7 +188,7 @@ async def analyze_repository(request: AnalysisRequest):
     # ── 4. Aggregate metrics ───────────────────────────────────────────────
     overall_score = int(total_score / max(scanned, 1))
     risky_count = len([f for f in risky_files if f.risk_level in ("High", "Medium")])
-    stability = min(100, 100 - overall_score + 10)
+    stability = max(0, min(100, 100 - overall_score + 10))
 
     # Security audit
     security = bug_detector.security_check(all_bugs)
@@ -190,7 +206,7 @@ async def analyze_repository(request: AnalysisRequest):
     
     if repo_key in SCAN_HISTORY:
         prev_data = SCAN_HISTORY[repo_key]
-        prev_bugs = prev_data["bugs"]
+        prev_bugs = [BugIssue(**b) if isinstance(b, dict) else b for b in prev_data["bugs"]]
         prev_hashes = prev_data["file_hashes"]
         
         # Compare files
@@ -222,8 +238,9 @@ async def analyze_repository(request: AnalysisRequest):
     # Save the new state
     SCAN_HISTORY[repo_key] = {
         "file_hashes": current_hashes,
-        "bugs": all_bugs
+        "bugs": [b.model_dump() for b in all_bugs]
     }
+    _save_history(SCAN_HISTORY)
 
     return AnalysisResponse(
         project_name=repo_name + (" (demo)" if used_demo else ""),
@@ -232,7 +249,7 @@ async def analyze_repository(request: AnalysisRequest):
         risky_files_count=risky_count,
         stability_score=stability,
         risky_files=risky_files,
-        failure_probability=float(overall_score / 4.0),
+        failure_probability=round(overall_score / 100.0, 2),
         bugs=all_bugs,
         scanned_files=scanned,
         security_score=security["security_score"],

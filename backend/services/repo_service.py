@@ -31,7 +31,7 @@ def _parse_github_url(url: str) -> Tuple[str, str]:
     return m.group(1), m.group(2)
 
 
-def fetch_github_files(url: str, branch: str = "main", token: str = None) -> List[Tuple[str, str]]:
+def fetch_github_files(url: str, branch: str = "main", token: Optional[str] = None) -> List[Tuple[str, str]]:
     """Return list of (path, content) for supported source files."""
     owner, repo = _parse_github_url(url)
     h = _headers(token, "github")
@@ -73,7 +73,7 @@ def _parse_gitlab_url(url: str) -> str:
     return requests.utils.quote(m.group(1), safe="")
 
 
-def fetch_gitlab_files(url: str, branch: str = "main", token: str = None) -> List[Tuple[str, str]]:
+def fetch_gitlab_files(url: str, branch: str = "main", token: Optional[str] = None) -> List[Tuple[str, str]]:
     """Return list of (path, content) for supported source files."""
     h = {"PRIVATE-TOKEN": token} if token else {}
     project_path = _parse_gitlab_url(url)
@@ -106,7 +106,7 @@ def fetch_gitlab_files(url: str, branch: str = "main", token: str = None) -> Lis
 
 # ── Dispatcher ──────────────────────────────────────────────────────────────
 
-def fetch_repo_files(url: str, branch: str = "main", token: str = None) -> List[Tuple[str, str]]:
+def fetch_repo_files(url: str, branch: str = "main", token: Optional[str] = None) -> List[Tuple[str, str]]:
     """Auto-detect platform and fetch files. Returns [] on failure."""
     try:
         if "github.com" in url:

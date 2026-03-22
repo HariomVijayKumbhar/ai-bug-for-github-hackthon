@@ -1,32 +1,40 @@
 from typing import List, Optional
 import sys
 import os
+from dotenv import load_dotenv
+from anthropic import AsyncAnthropic
+
+load_dotenv()
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.schemas import ChatResponse
 
 class AIService:
     def __init__(self):
-        self.random_responses = [
-            "The current stability index is acceptable, but monitor the hotspots for regressive patterns.",
-            "I recommend performing a manual peer review on the high-gravity modules.",
-            "Based on structural analysis, the current deployment appears stable."
-        ]
+        # Automatically uses ANTHROPIC_API_KEY environment variable
+        self.client = AsyncAnthropic()
+        self.system_prompt = (
+            "You are an AI code analysis assistant for a tool called AntyGravity. "
+            "AntyGravity detects bugs, security issues, and structural regressions in code. "
+            "Help the user understand the risks and how to fix them."
+        )
 
     async def get_reply(self, message: str, context: Optional[str] = None) -> ChatResponse:
-        msg = message.lower()
-        
-        # Keyword-based logic
-        if "risk" in msg:
-            reply = "Risk vectors are calculated purely from cyclomatic complexity (logic branching). High risk indicates code that is structurally prone to regressions."
-        elif "gravity" in msg:
-            reply = "Gravity Score represents the structural fragility of a module. High gravity files should be prioritized for refactoring to prevent system failure."
-        elif "fix" in msg or "suggest" in msg:
-            reply = "To reduce gravity, I recommend decomposing large functions into smaller units, reducing nested conditionals, and increasing unit test coverage."
-        elif context:
-            # Simple context usage
-            reply = f"Analyzing your current project state: I see your overall gravity is monitored. Focusing on the identified hotspots is the most efficient path to stabilization."
-        else:
-            import random
-            reply = random.choice(self.random_responses)
+        system = self.system_prompt
+        if context:
+            system += f"\n\nCurrent scan results (context):\n{context}\nReference this context if relevant."
+            
+        try:
+            response = await self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=500,
+                system=system,
+                messages=[
+                    {"role": "user", "content": message}
+                ]
+            )
+            reply = "".join(block.text for block in response.content)
+        except Exception as e:
+            reply = f"Error calling Anthropic API: {str(e)}"
             
         return ChatResponse(reply=reply)
