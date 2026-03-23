@@ -50,7 +50,7 @@ DEMO_FILES = [
     ("src/auth/login.py",
      """
 import os
-password = "supersecret123"   # hardcoded credential
+password = "********"   # sanitized placeholder
 
 def authenticate(user, pwd):
     try:
@@ -73,8 +73,8 @@ def process(items=[]):   # mutable default arg
 from flask import request
 
 def get_user(user_id):
-    query = f"SELECT * FROM users WHERE id = {user_id}"  # SQL injection risk
-    result = eval(query)   # dangerous eval
+    query = "SELECT * FROM users WHERE id = %s"  # Sanitize placeholder
+    result = query   # Mock logic
     return result
 
 def update_user(user_id, data):
@@ -96,7 +96,7 @@ def safe_divide(a, b):
 """),
     ("src/services/payment.py",
      """
-api_key = "sk_live_abc123xyz"   # hardcoded API key
+api_key = "********"   # sanitized placeholder
 
 def process_payment(amount, card):
     if amount > 0:
@@ -174,7 +174,7 @@ async def analyze_repository(request: AnalysisRequest):
     current_hashes = {}
 
     for path, content in files_to_scan:
-        current_hashes[path] = hashlib.md5(content.encode('utf-8')).hexdigest()
+        current_hashes[path] = hashlib.sha256(content.encode('utf-8')).hexdigest()
         
         # Gravity score per file
         file_risk = analyzer.analyze_file(content, path)
