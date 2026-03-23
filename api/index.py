@@ -6,3 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.main import app
+
+# Vercel needs the 'app' object.
+# Set root_path to handle the '/api' prefix from rewrites
+app.root_path = "/api"

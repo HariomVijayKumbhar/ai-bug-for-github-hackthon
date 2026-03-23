@@ -32,9 +32,14 @@ ai_service = AIService()
 
 # ── Global Scan History for Diffing ───────────────────────────────────────────
 import json
+import tempfile
 import pathlib
 
-HISTORY_FILE = pathlib.Path("scan_history.json")
+# Use /tmp for storage on Vercel, else use local directory
+if os.environ.get("VERCEL"):
+    HISTORY_FILE = pathlib.Path(tempfile.gettempdir()) / "scan_history.json"
+else:
+    HISTORY_FILE = pathlib.Path("scan_history.json")
 
 def _load_history() -> dict:
     if HISTORY_FILE.exists():
