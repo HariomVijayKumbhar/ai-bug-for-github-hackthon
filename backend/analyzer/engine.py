@@ -3,11 +3,13 @@ Static analysis engine — detects real bugs and calculates Gravity Score.
 """
 import ast
 import re
-import sys
 import os
+import sys
 from typing import List, Union, cast
 
+# Ensure the backend directory is in the path for local imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from models.schemas import FileRisk, RiskFactor, BugIssue
 
 # Type alias for function nodes — keeps isinstance checks clean

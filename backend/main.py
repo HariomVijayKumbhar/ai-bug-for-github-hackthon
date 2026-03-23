@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from typing import List
 import hashlib
+import os
+import sys
+
+# Ensure the backend directory is in the path for local imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from models.schemas import (
     AnalysisRequest, AnalysisResponse, ChatRequest, ChatResponse,

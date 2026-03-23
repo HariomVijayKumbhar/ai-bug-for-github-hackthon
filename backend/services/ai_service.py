@@ -6,7 +6,9 @@ from anthropic import AsyncAnthropic
 
 load_dotenv()
 
+# Ensure the backend directory is in the path for local imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from models.schemas import ChatResponse
 
 class AIService:
